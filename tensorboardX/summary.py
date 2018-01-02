@@ -13,21 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-"""## Generation of summaries.
-### Class for writing Summaries
-@@FileWriter
-@@FileWriterCache
-### Summary Ops
-@@tensor_summary
-@@scalar
-@@histogram
-@@audio
-@@image
-@@merge
-@@merge_all
-## Utilities
-@@get_summary_description
-"""
+"""Summary Ops."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -39,7 +25,6 @@ import bisect
 from six import StringIO
 from six.moves import range
 import numpy as np
-# pylint: disable=unused-import
 from .src.summary_pb2 import Summary
 from .src.summary_pb2 import HistogramProto
 from .src.summary_pb2 import SummaryMetadata
@@ -68,19 +53,17 @@ def _clean_tag(name):
     return name
 
 
-def scalar(name, scalar, collections=None):
+def scalar(name, scalar):
     """Outputs a `Summary` protocol buffer containing a single scalar value.
+
     The generated Summary has a Tensor.proto containing the input Tensor.
+
     Args:
-      name: A name for the generated node. Will also serve as the series name in
-        TensorBoard.
+      name: A name for the generated node. Will also serve as the series name in TensorBoard.
       tensor: A real numeric Tensor containing a single value.
-      collections: Optional list of graph collections keys. The new summary op is
-        added to these collections. Defaults to `[GraphKeys.SUMMARIES]`.
+
     Returns:
       A scalar `Tensor` of type `string`. Which contains a `Summary` protobuf.
-    Raises:
-      ValueError: If tensor has the wrong shape or type.
     """
     name = _clean_tag(name)
     scalar = makenp(scalar)
@@ -89,23 +72,21 @@ def scalar(name, scalar, collections=None):
     return Summary(value=[Summary.Value(tag=name, simple_value=scalar)])
 
 
-def histogram(name, values, bins, collections=None):
-    # pylint: disable=line-too-long
+def histogram(name, values, bins):
     """Outputs a `Summary` protocol buffer with a histogram.
-    The generated
-    [`Summary`](https://www.tensorflow.org/code/tensorflow/core/framework/summary.proto)
+
+    The generated [`Summary`](https://www.tensorflow.org/code/tensorflow/core/framework/summary.proto)
     has one summary value containing a histogram for `values`.
     This op reports an `InvalidArgument` error if any value is not finite.
+
     Args:
-      name: A name for the generated node. Will also serve as a series name in
-        TensorBoard.
-      values: A real numeric `Tensor`. Any shape. Values to use to
-        build the histogram.
-      collections: Optional list of graph collections keys. The new summary op is
-        added to these collections. Defaults to `[GraphKeys.SUMMARIES]`.
+      name: A name for the generated node. Will also serve as a series name in TensorBoard.
+      values: A real numeric `Tensor`. Any shape. Values to use to build the histogram.
+      bins: one of {'tensorflow','auto', 'fd', ...}, this determines how the bins are made. You can find
+        other options in: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram.html
+
     Returns:
-      A scalar `Tensor` of type `string`. The serialized `Summary` protocol
-      buffer.
+      A scalar `Tensor` of type `string`. The serialized `Summary` protocol buffer.
     """
     name = _clean_tag(name)
     values = makenp(values)
@@ -131,25 +112,28 @@ def make_histogram(values, bins):
 
 def image(tag, tensor):
     """Outputs a `Summary` protocol buffer with images.
-    The summary has up to `max_images` summary values containing images. The
-    images are built from `tensor` which must be 3-D with shape `[height, width,
-    channels]` and where `channels` can be:
+
+    The summary has up to `max_images` summary values containing images. The images are built
+    from `tensor` which must be 3-D with shape `[height, width, channels]` and where `channels`
+    can be:
+
     *  1: `tensor` is interpreted as Grayscale.
     *  3: `tensor` is interpreted as RGB.
     *  4: `tensor` is interpreted as RGBA.
-    The `name` in the outputted Summary.Value protobufs is generated based on the
-    name, with a suffix depending on the max_outputs setting:
+
+    The `name` in the outputted Summary.Value protobufs is generated based on the name,
+    with a suffix depending on the max_outputs setting:
     *  If `max_outputs` is 1, the summary value tag is '*name*/image'.
     *  If `max_outputs` is greater than 1, the summary value tags are
        generated sequentially as '*name*/image/0', '*name*/image/1', etc.
+
     Args:
-      tag: A name for the generated node. Will also serve as a series name in
-        TensorBoard.
-      tensor: A 3-D `uint8` or `float32` `Tensor` of shape `[height, width,
-        channels]` where `channels` is 1, 3, or 4.
+      tag: A name for the generated node. Will also serve as a series name in TensorBoard.
+      tensor: A 3-D `uint8` or `float32` `Tensor` of shape `[height, width, channels]`
+        where `channels` is 1, 3, or 4.
+
     Returns:
-      A scalar `Tensor` of type `string`. The serialized `Summary` protocol
-      buffer.
+      A scalar `Tensor` of type `string`. The serialized `Summary` protocol buffer.
     """
     tag = _clean_tag(tag)
     tensor = makenp(tensor, 'IMG')
